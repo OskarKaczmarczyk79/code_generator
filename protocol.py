@@ -21,3 +21,4 @@ class SensorData:
         # Rozpakowywanie danych z formatu binarnego
         unpacked = struct.unpack('if?', data)
         return SensorData(*unpacked)
+    #a
