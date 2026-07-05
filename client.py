@@ -11,7 +11,7 @@ def start_client():
         s.connect((host, port))
         
         # Tworzymy obiekt przy użyciu wygenerowanej klasy
-        my_sensor_data = SensorData(sensor_id=42, temperature=23.5, is_active=True)
+        my_sensor_data = SensorData(sensor_id=42, temperature=23.5, is_active=True, history=[1, 2, 3, 4, 5]) 
         
         # Używamy wygenerowanej metody serialize do zamiany na kod binarny!
         binary_data = my_sensor_data.serialize()

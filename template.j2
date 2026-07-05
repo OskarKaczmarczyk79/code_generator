@@ -3,17 +3,43 @@ import struct
 # Ten plik został wygenerowany automatycznie. Nie edytuj go ręcznie!
 
 class {{ class_name }}:
-    def __init__(self, {% for field in fields %}{{ field }}{% if not loop.last %}, {% endif %}{% endfor %}):
+    def __init__(self, {% for field in fields %}{{ field.name }}{% if not loop.last %}, {% endif %}{% endfor %}):
         {% for field in fields %}
-        self.{{ field }} = {{ field }}
+        self.{{ field.name }} = {{ field.name }}
         {% endfor %}
 
     def serialize(self):
-        # Pakowanie danych do formatu binarnego. Użyty format: {{ struct_format }}
-        return struct.pack('{{ struct_format }}', {% for field in fields %}self.{{ field }}{% if not loop.last %}, {% endif %}{% endfor %})
+        payload = bytearray()
+        {% for field in fields %}
+        {% if field.type == 'list' %}
+        if self.{{ field.name }} is None:
+            self.{{ field.name }} = []
+        payload += struct.pack('I', len(self.{{ field.name }}))
+        for item in self.{{ field.name }}:
+            payload += struct.pack('i', item)
+        {% else %}
+        payload += struct.pack('{{ type_mapping[field.type] }}', self.{{ field.name }})
+        {% endif %}
+        {% endfor %}
+        return bytes(payload)
 
     @staticmethod
     def deserialize(data):
-        # Rozpakowywanie danych z formatu binarnego
-        unpacked = struct.unpack('{{ struct_format }}', data)
-        return {{ class_name }}(*unpacked)
+        offset = 0
+        values = {}
+        {% for field in fields %}
+        {% if field.type == 'list' %}
+        count, = struct.unpack_from('I', data, offset)
+        offset += struct.calcsize('I')
+        values['{{ field.name }}'] = []
+        for _ in range(count):
+            item, = struct.unpack_from('i', data, offset)
+            offset += struct.calcsize('i')
+            values['{{ field.name }}'].append(item)
+        {% else %}
+        value, = struct.unpack_from('{{ type_mapping[field.type] }}', data, offset)
+        offset += struct.calcsize('{{ type_mapping[field.type] }}')
+        values['{{ field.name }}'] = value
+        {% endif %}
+        {% endfor %}
+        return {{ class_name }}(**values)

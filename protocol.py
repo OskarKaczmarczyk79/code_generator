@@ -3,7 +3,7 @@ import struct
 # Ten plik został wygenerowany automatycznie. Nie edytuj go ręcznie!
 
 class SensorData:
-    def __init__(self, sensor_id, temperature, is_active):
+    def __init__(self, sensor_id, temperature, is_active, history):
         
         self.sensor_id = sensor_id
         
@@ -11,14 +11,65 @@ class SensorData:
         
         self.is_active = is_active
         
+        self.history = history
+        
 
     def serialize(self):
-        # Pakowanie danych do formatu binarnego. Użyty format: if?
-        return struct.pack('if?', self.sensor_id, self.temperature, self.is_active)
+        payload = bytearray()
+        
+        
+        payload += struct.pack('i', self.sensor_id)
+        
+        
+        
+        payload += struct.pack('f', self.temperature)
+        
+        
+        
+        payload += struct.pack('?', self.is_active)
+        
+        
+        
+        if self.history is None:
+            self.history = []
+        payload += struct.pack('I', len(self.history))
+        for item in self.history:
+            payload += struct.pack('i', item)
+        
+        
+        return bytes(payload)
 
     @staticmethod
     def deserialize(data):
-        # Rozpakowywanie danych z formatu binarnego
-        unpacked = struct.unpack('if?', data)
-        return SensorData(*unpacked)
-    
+        offset = 0
+        values = {}
+        
+        
+        value, = struct.unpack_from('i', data, offset)
+        offset += struct.calcsize('i')
+        values['sensor_id'] = value
+        
+        
+        
+        value, = struct.unpack_from('f', data, offset)
+        offset += struct.calcsize('f')
+        values['temperature'] = value
+        
+        
+        
+        value, = struct.unpack_from('?', data, offset)
+        offset += struct.calcsize('?')
+        values['is_active'] = value
+        
+        
+        
+        count, = struct.unpack_from('I', data, offset)
+        offset += struct.calcsize('I')
+        values['history'] = []
+        for _ in range(count):
+            item, = struct.unpack_from('i', data, offset)
+            offset += struct.calcsize('i')
+            values['history'].append(item)
+        
+        
+        return SensorData(**values)
