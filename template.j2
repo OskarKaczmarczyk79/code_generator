@@ -17,6 +17,9 @@ class {{ class_name }}:
         payload += struct.pack('I', len(self.{{ field.name }}))
         for item in self.{{ field.name }}:
             payload += struct.pack('i', item)
+        {% elif field.type == 'str' %}
+        payload += struct.pack('I', len(self.{{ field.name }}))
+        payload += self.{{ field.name }}.encode('utf-8')
         {% else %}
         payload += struct.pack('{{ type_mapping[field.type] }}', self.{{ field.name }})
         {% endif %}
@@ -36,6 +39,12 @@ class {{ class_name }}:
             item, = struct.unpack_from('i', data, offset)
             offset += struct.calcsize('i')
             values['{{ field.name }}'].append(item)
+        {% elif field.type == 'str' %}
+        length, = struct.unpack_from('I', data, offset)
+        offset += struct.calcsize('I')
+        value = data[offset:offset + length].decode('utf-8')
+        offset += length
+        values['{{ field.name }}'] = value
         {% else %}
         value, = struct.unpack_from('{{ type_mapping[field.type] }}', data, offset)
         offset += struct.calcsize('{{ type_mapping[field.type] }}')
