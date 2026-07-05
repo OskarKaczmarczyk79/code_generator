@@ -1,0 +1,19 @@
+import struct
+
+# Ten plik został wygenerowany automatycznie. Nie edytuj go ręcznie!
+
+class {{ class_name }}:
+    def __init__(self, {% for field in fields %}{{ field }}{% if not loop.last %}, {% endif %}{% endfor %}):
+        {% for field in fields %}
+        self.{{ field }} = {{ field }}
+        {% endfor %}
+
+    def serialize(self):
+        # Pakowanie danych do formatu binarnego. Użyty format: {{ struct_format }}
+        return struct.pack('{{ struct_format }}', {% for field in fields %}self.{{ field }}{% if not loop.last %}, {% endif %}{% endfor %})
+
+    @staticmethod
+    def deserialize(data):
+        # Rozpakowywanie danych z formatu binarnego
+        unpacked = struct.unpack('{{ struct_format }}', data)
+        return {{ class_name }}(*unpacked)
